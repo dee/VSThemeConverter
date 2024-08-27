@@ -9,7 +9,7 @@ Before (VS 2022):
 
 After (QtCreator):
 <picture>
-    <image src="doc/qt_coding_horror.png" width="800" />
+    <image src="doc/qc_coding_horror.png" width="800" />
 </picture>
 
 Work in progress.
