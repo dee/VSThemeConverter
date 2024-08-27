@@ -4,10 +4,12 @@ This script converts Visual Studio editor color schemes into ones for Qt Creator
 
 Before (VS 2022):
 <picture>
-    <image src="doc/vs_coding_horror.png" width="200" />
+    <image src="doc/vs_coding_horror.png" width="800" />
 </picture>
 
 After (QtCreator):
-![qt coding horror theme](doc/qc_coding_horror.png)
+<picture>
+    <image src="doc/qt_coding_horror.png" width="800" />
+</picture>
 
 Work in progress.
