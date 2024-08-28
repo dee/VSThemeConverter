@@ -111,7 +111,7 @@ def parse_color(source: str) -> [int]:
     else:
         i = 0
     while i + 2 <= len(source):
-        segment = source[i: i+2]
+        segment = source[i: i + 2]
         result.append(int(segment, 16))
         i = i + 2
     return result
@@ -203,7 +203,6 @@ def main():
             for file in files:
                 if file.endswith(".vssettings"):
                     process_file(os.path.join(arg, file))
-
 
 
 if __name__ == "__main__":
