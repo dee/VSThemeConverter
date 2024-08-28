@@ -1,7 +1,9 @@
 import os.path
+import sys
 import xml.etree.ElementTree as ET
 
-input_file = "coding-horror-2010.vssettings"
+target_root = ""
+
 mappings = {
     "Comment": ["Comment", "Doxygen.Comment"],
     "Plain Text": "Text",
@@ -137,7 +139,12 @@ def map_color(input_color: str) -> str:
     return "#" + convert_color([a0, r0, g0, b0])
 
 
-def main():
+def usage():
+    print("Usage: main.py [file|directory]")
+
+
+def process_file(input_file: str):
+    print(f"Processing: {input_file}")
     tree = ET.parse(input_file)
     root = tree.getroot()
 
@@ -146,19 +153,13 @@ def main():
     output_file_name = os.path.basename(input_file)
     output_file_name, _ = os.path.splitext(output_file_name)
     output.attrib["name"] = output_file_name
-
-# TODO: Linux support
-    app_data = os.environ.get("APPDATA")
-    target_root = os.path.join(app_data, "QtProject/qtcreator/styles")
-    output_file_name = os.path.join(target_root, output_file_name+".xml")
+    output_file_name = os.path.join(target_root, output_file_name + ".xml")
 
     # iterate via Item elements
     for child in root.findall(".//Item"):
         source_name = child.attrib.get("Name")
         if source_name not in mappings.keys():
-            print(f"Skipping {source_name}")
             continue
-        print(f"Processing {source_name}")
         if type(mappings[source_name]).__name__ == "list":
             for element in mappings[source_name]:
                 map_element(child, element, output)
@@ -166,17 +167,43 @@ def main():
         if len(mappings[source_name]) != 0:
             map_element(child, mappings[source_name], output)
 
-# TODO: possible formatting using minidom
-# buf_bin = ET.tostring(self.root) # binary
-# buf_str = buf_bin.decode("utf-8")
-# buf_str = re.sub('\s+(?=<)', '', buf_str)
-# pretty_bin = minidom.parseString(buf_str).toprettyxml(indent="\t", encoding = "utf-8")
-# print(ET.tostring(output, encoding="utf8"))
-    print(ET.tostring(output, encoding="utf8").decode("utf8"))
+    # TODO: possible formatting using minidom
+    # buf_bin = ET.tostring(self.root) # binary
+    # buf_str = buf_bin.decode("utf-8")
+    # buf_str = re.sub('\s+(?=<)', '', buf_str)
+    # pretty_bin = minidom.parseString(buf_str).toprettyxml(indent="\t", encoding = "utf-8")
+    # print(ET.tostring(output, encoding="utf8"))
     with open(output_file_name, "wb") as f:
         f.write(ET.tostring(output, encoding='utf8'))
         f.flush()
         f.close()
+
+
+def main():
+    global target_root
+
+    if len(sys.argv) <= 1:
+        usage()
+        exit(0)
+
+    # TODO: Linux support
+    app_data = os.environ.get("APPDATA")
+    target_root = os.path.join(app_data, "QtProject/qtcreator/styles")
+    print(f"Saving to: {target_root}")
+    os.makedirs(target_root, exist_ok=True)
+
+    i = 1
+    while i < len(sys.argv):
+        arg = sys.argv[i]
+        i = i + 1
+        if os.path.isfile(arg):
+            process_file(arg)
+        else:
+            files = [f for f in os.listdir(arg)]
+            for file in files:
+                if file.endswith(".vssettings"):
+                    process_file(os.path.join(arg, file))
+
 
 
 if __name__ == "__main__":
