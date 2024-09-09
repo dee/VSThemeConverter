@@ -1,9 +1,11 @@
 import os.path
+import sys
 import xml.etree.ElementTree as ET
 import re
 from xml.dom import minidom
 
-input_file = "mariana_vs2015.vssettings"
+target_root = ""
+
 # a key in a mappings is an entry in VS style,
 # values assigned to it are entries in a Qt Creator style description
 mappings = {
@@ -113,7 +115,7 @@ def parse_color(source: str) -> [int]:
     else:
         i = 0
     while i + 2 <= len(source):
-        segment = source[i: i+2]
+        segment = source[i: i + 2]
         result.append(int(segment, 16))
         i = i + 2
     return result
@@ -140,7 +142,12 @@ def map_color(input_color: str) -> str:
     return "#" + convert_color([r0, g0, b0])
 
 
-def main():
+def usage():
+    print("Usage: main.py [file|directory]")
+
+
+def process_file(input_file: str):
+    print(f"Processing: {input_file}")
     tree = ET.parse(input_file)
     root = tree.getroot()
 
@@ -149,19 +156,13 @@ def main():
     output_file_name = os.path.basename(input_file)
     output_file_name, _ = os.path.splitext(output_file_name)
     output.attrib["name"] = output_file_name
-
-# TODO: Linux support
-    app_data = os.environ.get("APPDATA")
-    target_root = os.path.join(app_data, "QtProject/qtcreator/styles")
-    output_file_name = os.path.join(target_root, output_file_name+".xml")
+    output_file_name = os.path.join(target_root, output_file_name + ".xml")
 
     # iterate via Item elements
     for child in root.findall(".//Item"):
         source_name = child.attrib.get("Name")
         if source_name not in mappings.keys():
-            # print(f"Skipping {source_name}")
             continue
-        print(f"Processing {source_name}")
         if type(mappings[source_name]).__name__ == "list":
             for element in mappings[source_name]:
                 map_element(child, element, output)
@@ -169,7 +170,6 @@ def main():
         if len(mappings[source_name]) != 0:
             map_element(child, mappings[source_name], output)
 
-    # TODO: possible formatting using minidom
     binary_buf = ET.tostring(output) # binary
     string_buf = binary_buf.decode("utf-8")
     string_buf = re.sub('\s+(?=<)', '', string_buf)
@@ -178,6 +178,32 @@ def main():
         f.write(pretty_binary.decode(encoding='utf8'))
         f.flush()
         f.close()
+
+
+def main():
+    global target_root
+
+    if len(sys.argv) <= 1:
+        usage()
+        exit(0)
+
+    # TODO: Linux support
+    app_data = os.environ.get("APPDATA")
+    target_root = os.path.join(app_data, "QtProject/qtcreator/styles")
+    print(f"Saving to: {target_root}")
+    os.makedirs(target_root, exist_ok=True)
+
+    i = 1
+    while i < len(sys.argv):
+        arg = sys.argv[i]
+        i = i + 1
+        if os.path.isfile(arg):
+            process_file(arg)
+        else:
+            files = [f for f in os.listdir(arg)]
+            for file in files:
+                if file.endswith(".vssettings"):
+                    process_file(os.path.join(arg, file))
 
 
 if __name__ == "__main__":
