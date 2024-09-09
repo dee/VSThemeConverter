@@ -175,7 +175,7 @@ def process_file(input_file: str):
     string_buf = re.sub('\s+(?=<)', '', string_buf)
     pretty_binary = minidom.parseString(string_buf).toprettyxml(indent="\t", encoding = "utf-8")
     with open(output_file_name, "wb") as f:
-        f.write(pretty_binary.decode(encoding='utf8'))
+        f.write(pretty_binary)
         f.flush()
         f.close()
 
