@@ -1,23 +1,27 @@
 import os.path
 import xml.etree.ElementTree as ET
+import re
+from xml.dom import minidom
 
-input_file = "coding-horror-2010.vssettings"
+input_file = "mariana_vs2015.vssettings"
+# a key in a mappings is an entry in VS style,
+# values assigned to it are entries in a Qt Creator style description
 mappings = {
     "Comment": ["Comment", "Doxygen.Comment"],
-    "Plain Text": "Text",
+    "Plain Text": ["Text", "Parameter", "Local", "Field", "Label"],
     "Selected Text": "Selection",
     "Brace Matching (Rectangle)": "Parentheses",
-    "Identifier": ["Declaration", "Namespace", "Local", "Parameter", "Global", "Field"],
-    "Number": "Number",
+    "class name": "Type",
+    "Number": ["Number", "Function"],
     "Operator": "Operator",
     "String": "String",
     "String(C# @ Verbatim)": "",
     "urlformat": "",
-    "User Types": ["Type", "Function", "PrimitiveType", "Overloaded Operator"],
-    "User Types(Enums)": "",
-    "User Types(Interfaces)": "",
-    "User Types(Delegates)": "",
-    "User Types(Value types)": "",
+    "User Types": ["PrimitiveType", "Overloaded Operator"],
+    "enum name": ["Static"],
+    "interface name": [],
+    "delegate name": "",
+    "struct name": "",
     "Indicator Margin": "",
     "Line Numbers": "LineNumber",
     "Preprocessor Keyword": "Preprocessor",
@@ -130,11 +134,10 @@ def map_color(input_color: str) -> str:
     0x0033FF9E -> #009EFF33
     """
     arr = parse_color(input_color)
-    a0 = 255 - arr[0]
     r0 = arr[3]
     g0 = arr[2]
     b0 = arr[1]
-    return "#" + convert_color([a0, r0, g0, b0])
+    return "#" + convert_color([r0, g0, b0])
 
 
 def main():
@@ -156,7 +159,7 @@ def main():
     for child in root.findall(".//Item"):
         source_name = child.attrib.get("Name")
         if source_name not in mappings.keys():
-            print(f"Skipping {source_name}")
+            # print(f"Skipping {source_name}")
             continue
         print(f"Processing {source_name}")
         if type(mappings[source_name]).__name__ == "list":
@@ -166,15 +169,13 @@ def main():
         if len(mappings[source_name]) != 0:
             map_element(child, mappings[source_name], output)
 
-# TODO: possible formatting using minidom
-# buf_bin = ET.tostring(self.root) # binary
-# buf_str = buf_bin.decode("utf-8")
-# buf_str = re.sub('\s+(?=<)', '', buf_str)
-# pretty_bin = minidom.parseString(buf_str).toprettyxml(indent="\t", encoding = "utf-8")
-# print(ET.tostring(output, encoding="utf8"))
-    print(ET.tostring(output, encoding="utf8").decode("utf8"))
+    # TODO: possible formatting using minidom
+    binary_buf = ET.tostring(output) # binary
+    string_buf = binary_buf.decode("utf-8")
+    string_buf = re.sub('\s+(?=<)', '', string_buf)
+    pretty_binary = minidom.parseString(string_buf).toprettyxml(indent="\t", encoding = "utf-8")
     with open(output_file_name, "wb") as f:
-        f.write(ET.tostring(output, encoding='utf8'))
+        f.write(pretty_binary.decode(encoding='utf8'))
         f.flush()
         f.close()
 
